@@ -1,0 +1,37 @@
+Sure, here's the contents for the file /k3s-onebox/roles/observability/tasks/main.yml:
+
+---
+- name: Add Grafana Helm repository
+  helm_repository:
+    name: grafana
+    repo_url: https://grafana.github.io/helm-charts
+    state: present
+
+- name: Update Helm repositories
+  helm_repository:
+    name: grafana
+    state: updated
+
+- name: Install Loki stack with Promtail and Grafana
+  helm:
+    name: loki-stack
+    chart: grafana/loki-stack
+    namespace: observability
+    create_namespace: true
+    values:
+      grafana:
+        enabled: true
+      promtail:
+        enabled: true
+  register: loki_stack_install
+
+- name: Wait for Grafana rollout
+  kubernetes.core.k8s_info:
+    kind: Deployment
+    namespace: observability
+    name: grafana
+  register: grafana_deployment
+  until: grafana_deployment.resources | length > 0
+  retries: 10
+  delay: 5
+  when: loki_stack_install.changed

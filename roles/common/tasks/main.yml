@@ -1,0 +1,61 @@
+- name: Install necessary packages
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - jq
+      - htop
+      - apt-transport-https
+      - ufw
+    state: present
+    update_cache: yes
+
+- name: Create swap file
+  command: fallocate -l {{ swap_size }}G /swapfile
+  args:
+    creates: /swapfile
+
+- name: Set swap file permissions
+  file:
+    path: /swapfile
+    mode: '0600'
+
+- name: Enable swap file
+  command: mkswap /swapfile
+  when: ansible_swaptotal_mb == 0
+
+- name: Add swap file to fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    state: present
+
+- name: Configure sysctl settings
+  copy:
+    dest: /etc/sysctl.d/99-k3s.conf
+    content: |
+      fs.inotify.max_user_watches=1048576
+      fs.inotify.max_user_instances=512
+      net.ipv4.ip_forward=1
+
+- name: Apply sysctl settings
+  notify: Reload sysctl
+
+- name: Configure UFW
+  ufw:
+    state: enabled
+    policy: deny
+    rule: allow
+    name: "{{ item }}"
+  loop:
+    - '22/tcp'
+    - '80/tcp'
+    - '443/tcp'
+
+- name: Ensure UFW is enabled
+  command: ufw status verbose
+  register: ufw_status
+  changed_when: false
+
+- debug:
+    var: ufw_status.stdout

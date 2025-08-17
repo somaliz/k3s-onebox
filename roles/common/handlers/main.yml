@@ -1,0 +1,5 @@
+handlers/main.yml
+
+- name: Apply sysctl settings
+  command: sysctl --system
+  when: ansible_facts['os_family'] == "Debian"

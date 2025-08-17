@@ -1,0 +1,27 @@
+Sure, here's the contents for the file: /k3s-onebox/roles/k3s/tasks/main.yml
+
+---
+- name: Install k3s server
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --write-kubeconfig-mode=644" sh -s -
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: Wait for k3s node to be ready
+  command: kubectl get nodes
+  register: k3s_nodes
+  retries: 10
+  delay: 5
+  until: k3s_nodes.rc == 0
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Print kube-system pods for debugging
+  command: kubectl get pods -n kube-system
+  register: kube_system_pods
+  changed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- debug:
+    var: kube_system_pods.stdout_lines

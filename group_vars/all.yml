@@ -1,0 +1,17 @@
+swap_size: 2
+open_ports:
+  - 22/tcp
+  - 80/tcp
+  - 443/tcp
+acme_email: you@example.com
+clusterissuer_name: letsencrypt-http
+acme_server: "https://acme-v02.api.letsencrypt.org/directory"  # Production
+# acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"  # Staging
+mysql:
+  root_password: "your_root_password"
+  username: "app_user"
+  password: "your_app_password"
+  database: "your_database_name"
+  primary_pvc_size: "8Gi"  # Adjust as needed
+install_observability: true
+install_mysql: true

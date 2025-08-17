@@ -1,0 +1,11 @@
+---
+- hosts: vps
+  become: true
+  roles:
+    - common
+    - k3s
+    - kubetools
+    - cert_manager
+    - observability
+    - mysql
+...

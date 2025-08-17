@@ -1,0 +1,23 @@
+- name: Ensure kubeconfig exists
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /root/.kube/config
+    mode: '0600'
+  register: kubeconfig_copy
+  changed_when: kubeconfig_copy.changed
+
+- name: Install Helm v3 if not present
+  shell: |
+    if ! command -v helm &> /dev/null; then
+      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    fi
+  register: helm_install
+  changed_when: helm_install.changed
+
+- name: Verify Helm version
+  command: helm version --short
+  register: helm_version
+  changed_when: false
+
+- debug:
+    msg: "Helm version: {{ helm_version.stdout }}"

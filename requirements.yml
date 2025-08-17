@@ -1,0 +1,3 @@
+community.general: 
+  src: https://github.com/ansible-collections/community.general.git
+  version: "1.0.0"

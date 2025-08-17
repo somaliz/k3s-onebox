@@ -1,0 +1,37 @@
+- name: Add Bitnami Helm repository
+  ansible.builtin.helm_repository:
+    name: bitnami
+    repo_url: https://charts.bitnami.com/bitnami
+    state: present
+
+- name: Install Bitnami MySQL
+  ansible.builtin.helm:
+    name: mysql
+    chart: bitnami/mysql
+    namespace: db
+    create_namespace: true
+    values:
+      - auth:
+          rootPassword: "{{ mysql_root_password }}"
+          database: "{{ mysql_database }}"
+          username: "{{ mysql_username }}"
+          password: "{{ mysql_password }}"
+      - primary:
+          persistence:
+            size: "{{ mysql_pvc_size }}"
+      - resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+  when: install_mysql | default(false)
+
+- name: Wait for MySQL StatefulSet rollout
+  ansible.builtin.k8s_info:
+    kind: StatefulSet
+    namespace: db
+    name: mysql
+  register: mysql_statefulset
+  until: mysql_statefulset.resources | length > 0
+  retries: 10
+  delay: 5
+  when: install_mysql | default(false)
